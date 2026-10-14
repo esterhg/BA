@@ -11,6 +11,7 @@ import { Catalogo } from './presentation/views/Catalogo.jsx'
 import { Admin } from './presentation/views/Admin.jsx'
 import { Historial } from './presentation/views/Historial.jsx'
 import { Exportar } from './presentation/views/Exportar.jsx'
+import { Usuarios } from './presentation/views/Usuarios.jsx'
 
 // Orquestador: mantiene el estado global (usuario, catálogos, cola) y enruta las vistas.
 export default function App() {
@@ -58,6 +59,7 @@ export default function App() {
           <p className="mu sm" style={{ marginTop: 18 }}>Administración</p>
           <Tile k="adm" t="Resumen y administración" s="Totales, activos por edificio y por usuario" onClick={() => setView('admin')} />
           <Tile k="his" t="Historial de movimientos" s="Quién creó, editó o eliminó cada activo" onClick={() => setView('historial')} />
+          <Tile k="usr" t="Usuarios" s="Crear y consultar usuarios del sistema" onClick={() => setView('usuarios')} />
           <Tile k="exp" t="Exportar activos (CSV)" s="Descarga todos los activos en un archivo" onClick={() => setView('exportar')} />
         </>}
       </>}
@@ -79,6 +81,7 @@ export default function App() {
 
       {view === 'admin' && esAdmin && <><BarraTop t="Resumen y administración" /><Admin cat={cat} /><Volver onClick={() => setView('panel')} /></>}
       {view === 'historial' && esAdmin && <><BarraTop t="Historial de movimientos" /><Historial /><Volver onClick={() => setView('panel')} /></>}
+      {view === 'usuarios' && esAdmin && <><BarraTop t="Usuarios" /><Usuarios /><Volver onClick={() => setView('panel')} /></>}
       {view === 'exportar' && esAdmin && <><BarraTop t="Exportar activos" /><Exportar cat={cat} /><Volver onClick={() => setView('panel')} /></>}
     </div>
   )

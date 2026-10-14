@@ -9,6 +9,8 @@ const noImpl = (nombre) => { throw new Error(`No implementado: ${nombre}`) }
 export class UsuarioRepository {
   buscarActivoPorUsername(_username) { return noImpl('UsuarioRepository.buscarActivoPorUsername') }
   listarActivos() { return noImpl('UsuarioRepository.listarActivos') }
+  existeUsername(_username) { return noImpl('UsuarioRepository.existeUsername') }
+  crear(_datos) { return noImpl('UsuarioRepository.crear') }
 }
 
 export class CatalogoRepository {

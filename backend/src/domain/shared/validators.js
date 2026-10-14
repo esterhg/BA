@@ -17,6 +17,8 @@ export const LIMITES = {
   imagenUrl: 2048,
   username: 100,
   password: 200,
+  nombreUsuario: 150,
+  passwordMin: 8,
 }
 
 // Un texto es "limpio" si es string, no vacío tras recortar y dentro del máximo.

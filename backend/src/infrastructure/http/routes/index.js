@@ -5,7 +5,7 @@ import { loginLimiter, escrituraLimiter } from '../rateLimiters.js'
 // Ensambla todas las rutas. Recibe los controladores y los middlewares ya creados.
 export function crearRutas({ controllers, auth, soloAdmin, pool }) {
   const router = Router()
-  const { authC, catalogoC, activoC, adminC } = controllers
+  const { authC, catalogoC, activoC, adminC, usuarioC } = controllers
 
   // Salud
   router.get('/health', h(async (_req, res) => { await pool.query('SELECT 1'); res.json({ ok: true }) }))
@@ -27,7 +27,8 @@ export function crearRutas({ controllers, auth, soloAdmin, pool }) {
   router.post('/activos/sync', auth, escrituraLimiter, h(activoC.sincronizar))
 
   // Administración
-  router.get('/admin/usuarios', auth, soloAdmin, h(adminC.listarUsuarios))
+  router.get('/admin/usuarios', auth, soloAdmin, h(usuarioC.listar))
+  router.post('/admin/usuarios', auth, soloAdmin, escrituraLimiter, h(usuarioC.crear))
   router.get('/admin/resumen', auth, soloAdmin, h(adminC.resumen))
   router.get('/movimientos', auth, soloAdmin, h(adminC.listarMovimientos))
 

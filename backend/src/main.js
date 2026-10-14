@@ -20,6 +20,7 @@ import { crearLogin } from './application/use-cases/auth/login.js'
 import { crearCatalogoUseCases } from './application/use-cases/catalogo/catalogoUseCases.js'
 import { crearActivoUseCases } from './application/use-cases/activos/activoUseCases.js'
 import { crearAdminUseCases } from './application/use-cases/admin/adminUseCases.js'
+import { crearUsuarioUseCases } from './application/use-cases/admin/usuarioUseCases.js'
 
 // HTTP (infraestructura de entrada)
 import { crearAuth, soloAdmin } from './infrastructure/http/middlewares.js'
@@ -27,6 +28,7 @@ import { crearAuthController } from './infrastructure/http/controllers/authContr
 import { crearCatalogoController } from './infrastructure/http/controllers/catalogoController.js'
 import { crearActivoController } from './infrastructure/http/controllers/activoController.js'
 import { crearAdminController } from './infrastructure/http/controllers/adminController.js'
+import { crearUsuarioController } from './infrastructure/http/controllers/usuarioController.js'
 import { crearRutas } from './infrastructure/http/routes/index.js'
 import { crearApp } from './infrastructure/http/app.js'
 
@@ -46,6 +48,7 @@ const login = crearLogin({ usuarioRepo, tokenService, hashService })
 const catalogoUC = crearCatalogoUseCases({ catalogoRepo })
 const activoUC = crearActivoUseCases({ activoRepo, movimientoRepo })
 const adminUC = crearAdminUseCases({ adminRepo, usuarioRepo, movimientoRepo })
+const usuarioUC = crearUsuarioUseCases({ usuarioRepo, hashService })
 
 // --- Controladores ---
 const controllers = {
@@ -53,6 +56,7 @@ const controllers = {
   catalogoC: crearCatalogoController(catalogoUC),
   activoC: crearActivoController(activoUC),
   adminC: crearAdminController(adminUC),
+  usuarioC: crearUsuarioController(usuarioUC),
 }
 
 // --- HTTP ---
