@@ -3,6 +3,7 @@ import { api } from '../../infrastructure/api/client.js'
 import { dbPut, dbDelete } from '../../infrastructure/storage/db.js'
 import { norm, mensajeDuplicado } from '../../domain/format.js'
 import { ESTADO } from '../../domain/constants.js'
+import { EscanerCodigo } from '../components/EscanerCodigo.jsx'
 
 // Captura de activos de una sesión, con CRUD sobre la cola offline.
 export function Captura({ ses, cat, cola, refresh, doSync, onEnd }) {
@@ -11,6 +12,7 @@ export function Captura({ ses, cat, cola, refresh, doSync, onEnd }) {
   const [editId, setEditId] = useState(null)     // id del registro en edición (null = creando)
   const [sel, setSel] = useState(null)           // id del registro expandido en la lista
   const [borrando, setBorrando] = useState(null) // id en confirmación de borrado
+  const [escaneando, setEscaneando] = useState(false)
   const codigoRef = useRef()
   const sug = useMemo(() => {
     const q = norm(f.q)
@@ -91,7 +93,10 @@ export function Captura({ ses, cat, cola, refresh, doSync, onEnd }) {
     <div className="ses"><div><small>Edificio</small><b>{ses.edificio}</b></div><div><small>Nivel</small><b>{ses.nivel}</b></div></div>
     <div className="card" style={{ marginTop: 14 }}>
       <label style={{ marginTop: 0 }}>Código</label>
-      <input ref={codigoRef} autoFocus value={f.codigo} onChange={(e) => setF({ ...f, codigo: e.target.value })} onKeyDown={enter(() => document.getElementById('mod').focus())} />
+      <div className="row-scan">
+        <input ref={codigoRef} autoFocus value={f.codigo} onChange={(e) => setF({ ...f, codigo: e.target.value })} onKeyDown={enter(() => document.getElementById('mod').focus())} />
+        <button type="button" className="btn-scan" onClick={() => setEscaneando(true)}>📷 Escanear</button>
+      </div>
       <label>Modelo (buscar y seleccionar)</label>
       {f.modelo
         ? <div className="chip"><b>{f.modelo.nombre}</b><button onClick={() => setF({ ...f, modelo: null, q: '' })}>Cambiar</button></div>
@@ -128,5 +133,9 @@ export function Captura({ ses, cat, cola, refresh, doSync, onEnd }) {
       {!mias.length && <p className="mu sm">Aún no hay registros.</p>}
       <button className="full" onClick={onEnd}>Cerrar sesión de inventario</button>
     </div>
+
+    {escaneando && <EscanerCodigo
+      onDetectado={(texto) => { setF((prev) => ({ ...prev, codigo: texto })); setEscaneando(false); setTimeout(() => document.getElementById('mod')?.focus()) }}
+      onCerrar={() => setEscaneando(false)} />}
   </>
 }

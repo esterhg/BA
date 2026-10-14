@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { api } from '../../infrastructure/api/client.js'
+import { EscanerCodigo } from './EscanerCodigo.jsx'
 
 // Formulario de crear/editar un activo directamente contra el servidor.
 export function FormActivo({ cat, inicial, onCancel, onSaved }) {
   const esNuevo = !inicial.id
   const [codigo, setCodigo] = useState(inicial.codigo || '')
   const [serie, setSerie] = useState(inicial.serie || '')
+  const [escaneando, setEscaneando] = useState(false)
   const [modeloId, setModeloId] = useState(inicial.modelo_id ?? '')
   // Deducir el edificio del nivel inicial para precargar el selector.
   const edInicial = cat.ubicaciones.find((e) => e.niveles.some((n) => n.id === inicial.nivel_id))
@@ -36,7 +38,10 @@ export function FormActivo({ cat, inicial, onCancel, onSaved }) {
     <div className="card">
       <h2>{esNuevo ? 'Nuevo activo' : 'Editar activo'}</h2>
       <label>Código</label>
-      <input value={codigo} onChange={(e) => setCodigo(e.target.value)} autoFocus />
+      <div className="row-scan">
+        <input value={codigo} onChange={(e) => setCodigo(e.target.value)} autoFocus />
+        <button type="button" className="btn-scan" onClick={() => setEscaneando(true)}>📷 Escanear</button>
+      </div>
       <label>Serie</label>
       <input value={serie} onChange={(e) => setSerie(e.target.value)} />
       <label>Modelo</label>
@@ -56,6 +61,10 @@ export function FormActivo({ cat, inicial, onCancel, onSaved }) {
       <button className="p full" disabled={busy} onClick={guardar}>{busy ? 'Guardando...' : (esNuevo ? 'Crear activo' : 'Guardar cambios')}</button>
       {err && <div className="msg er">{err}</div>}
       <button className="full" onClick={onCancel}>Cancelar</button>
+
+      {escaneando && <EscanerCodigo
+        onDetectado={(texto) => { setCodigo(texto); setEscaneando(false) }}
+        onCerrar={() => setEscaneando(false)} />}
     </div>
   )
 }
