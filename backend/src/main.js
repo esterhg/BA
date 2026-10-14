@@ -1,0 +1,66 @@
+// Composition root: ensambla las capas (inyección de dependencias) y arranca.
+// Es el único archivo que conoce infraestructura, aplicación y HTTP a la vez.
+import { config } from './infrastructure/config/env.js'
+import { pool } from './infrastructure/db/pool.js'
+
+// Servicios de seguridad (infraestructura)
+import { JwtTokenService } from './infrastructure/security/jwtTokenService.js'
+import { BcryptHashService } from './infrastructure/security/bcryptHashService.js'
+
+// Repositorios (infraestructura)
+import { PgUsuarioRepository } from './infrastructure/db/pgUsuarioRepository.js'
+import { PgCatalogoRepository } from './infrastructure/db/pgCatalogoRepository.js'
+import { PgActivoRepository } from './infrastructure/db/pgActivoRepository.js'
+import { PgMovimientoRepository } from './infrastructure/db/pgMovimientoRepository.js'
+import { PgAdminRepository } from './infrastructure/db/pgAdminRepository.js'
+import { inicializarBaseDeDatos } from './infrastructure/db/bootstrap.js'
+
+// Casos de uso (aplicación)
+import { crearLogin } from './application/use-cases/auth/login.js'
+import { crearCatalogoUseCases } from './application/use-cases/catalogo/catalogoUseCases.js'
+import { crearActivoUseCases } from './application/use-cases/activos/activoUseCases.js'
+import { crearAdminUseCases } from './application/use-cases/admin/adminUseCases.js'
+
+// HTTP (infraestructura de entrada)
+import { crearAuth, soloAdmin } from './infrastructure/http/middlewares.js'
+import { crearAuthController } from './infrastructure/http/controllers/authController.js'
+import { crearCatalogoController } from './infrastructure/http/controllers/catalogoController.js'
+import { crearActivoController } from './infrastructure/http/controllers/activoController.js'
+import { crearAdminController } from './infrastructure/http/controllers/adminController.js'
+import { crearRutas } from './infrastructure/http/routes/index.js'
+import { crearApp } from './infrastructure/http/app.js'
+
+// --- Servicios ---
+const tokenService = new JwtTokenService(config.jwtSecret)
+const hashService = new BcryptHashService()
+
+// --- Repositorios ---
+const usuarioRepo = new PgUsuarioRepository(pool)
+const catalogoRepo = new PgCatalogoRepository(pool)
+const activoRepo = new PgActivoRepository(pool)
+const movimientoRepo = new PgMovimientoRepository(pool)
+const adminRepo = new PgAdminRepository(pool)
+
+// --- Casos de uso ---
+const login = crearLogin({ usuarioRepo, tokenService, hashService })
+const catalogoUC = crearCatalogoUseCases({ catalogoRepo })
+const activoUC = crearActivoUseCases({ activoRepo, movimientoRepo })
+const adminUC = crearAdminUseCases({ adminRepo, usuarioRepo, movimientoRepo })
+
+// --- Controladores ---
+const controllers = {
+  authC: crearAuthController({ login }),
+  catalogoC: crearCatalogoController(catalogoUC),
+  activoC: crearActivoController(activoUC),
+  adminC: crearAdminController(adminUC),
+}
+
+// --- HTTP ---
+const auth = crearAuth(tokenService)
+const router = crearRutas({ controllers, auth, soloAdmin, pool })
+const app = crearApp({ router, corsOrigin: config.corsOrigin })
+
+// --- Arranque ---
+inicializarBaseDeDatos({ pool, hashService, config })
+  .then(() => app.listen(config.port, () => console.log(`API lista en el puerto ${config.port}`)))
+  .catch((e) => { console.error(e); process.exit(1) })

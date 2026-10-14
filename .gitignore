@@ -1,0 +1,31 @@
+# Dependencias
+node_modules/
+
+# Builds
+dist/
+build/
+
+# Variables de entorno con secretos (NUNCA subir)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Pero sí permitir las plantillas de ejemplo
+!.env.example
+
+# Claves y certificados
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Logs y temporales
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
