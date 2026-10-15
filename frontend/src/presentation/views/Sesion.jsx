@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Volver } from '../components/ui.jsx'
+import { uuid } from '../../domain/format.js'
 
 // Selección de edificio y nivel para iniciar una sesión de captura.
 export function Sesion({ cat, onStart, onBack }) {
@@ -18,7 +19,7 @@ export function Sesion({ cat, onStart, onBack }) {
       <select value={edId} onChange={(e) => { setEdId(e.target.value); setNvId('') }}>{cat.ubicaciones.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}</select>
       <label>Nivel</label>
       <select value={nv?.id ?? ''} onChange={(e) => setNvId(e.target.value)}>{ed?.niveles.map((n) => <option key={n.id} value={n.id}>{n.nombre}</option>)}</select>
-      <button className="p full" onClick={() => onStart({ id: crypto.randomUUID(), nivel_id: nv.id, edificio: ed.nombre, nivel: nv.nombre })}>Iniciar sesión de inventario</button>
+      <button className="p full" onClick={() => onStart({ id: uuid(), nivel_id: nv.id, edificio: ed.nombre, nivel: nv.nombre })}>Iniciar sesión de inventario</button>
       <Volver onClick={onBack} />
     </div>
   )

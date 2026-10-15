@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { api } from '../../infrastructure/api/client.js'
 import { dbPut, dbDelete } from '../../infrastructure/storage/db.js'
-import { norm, mensajeDuplicado } from '../../domain/format.js'
+import { norm, mensajeDuplicado, uuid } from '../../domain/format.js'
 import { ESTADO } from '../../domain/constants.js'
 import { EscanerCodigo } from '../components/EscanerCodigo.jsx'
 
@@ -33,7 +33,7 @@ export function Captura({ ses, cat, cola, refresh, doSync, onEnd }) {
 
     if (editId) return editarGuardar(codigo, serie)          // flujo de edición
 
-    const reg = { id: crypto.randomUUID(), codigo, serie, modelo_id: f.modelo.id, modelo_nombre: f.modelo.nombre,
+    const reg = { id: uuid(), codigo, serie, modelo_id: f.modelo.id, modelo_nombre: f.modelo.nombre,
       nivel_id: ses.nivel_id, sesion_id: ses.id, capturado_en: new Date().toISOString(), estado: 'pendiente' }
     let texto = 'Guardado en el dispositivo. Se validará al sincronizar.'
     if (navigator.onLine) {                                   // validación inmediata en el servidor
