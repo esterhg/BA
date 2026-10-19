@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS activos (
   seq bigserial UNIQUE,
   codigo text NOT NULL,
   serie text NOT NULL,
+  epc text,
   modelo_id int NOT NULL REFERENCES modelos(id),
   nivel_id int NOT NULL REFERENCES niveles(id),
   sesion_id uuid REFERENCES sesiones(id),
@@ -45,8 +46,13 @@ CREATE TABLE IF NOT EXISTS activos (
   capturado_en timestamptz NOT NULL,
   creado_en timestamptz NOT NULL DEFAULT now()
 );
+-- Para bases ya creadas: agrega la columna EPC si aún no existe.
+ALTER TABLE activos ADD COLUMN IF NOT EXISTS epc text;
 CREATE UNIQUE INDEX IF NOT EXISTS activos_codigo_uq ON activos (lower(codigo));
 CREATE UNIQUE INDEX IF NOT EXISTS activos_serie_uq ON activos (lower(serie));
+-- EPC de etiqueta RFID: único por activo. El índice ignora NULL, así que varios
+-- activos pueden quedar sin EPC sin chocar entre sí.
+CREATE UNIQUE INDEX IF NOT EXISTS activos_epc_uq ON activos (epc) WHERE epc IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS conflictos_sync (
   id serial PRIMARY KEY,

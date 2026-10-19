@@ -28,6 +28,10 @@ export class ActivoRepository {
   editar(_id, _datos) { return noImpl('ActivoRepository.editar') }
   eliminar(_id) { return noImpl('ActivoRepository.eliminar') }
   sincronizarRegistro(_r, _usuarioId, _inmediato) { return noImpl('ActivoRepository.sincronizarRegistro') }
+  crearConEpc(_datos, _usuarioId) { return noImpl('ActivoRepository.crearConEpc') }
+  buscarPorEpc(_epc) { return noImpl('ActivoRepository.buscarPorEpc') }
+  vincularEpc(_id, _epc) { return noImpl('ActivoRepository.vincularEpc') }
+  desvincularEpc(_id) { return noImpl('ActivoRepository.desvincularEpc') }
 }
 
 export class MovimientoRepository {

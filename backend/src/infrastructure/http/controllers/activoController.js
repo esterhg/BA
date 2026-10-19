@@ -36,5 +36,33 @@ export function crearActivoController(uc) {
       const resultados = await uc.sincronizar(req.body || {}, req.user)
       res.json({ resultados })
     },
+
+    // --- EPC / RFID ------------------------------------------------------
+    // POST /activos/epc  body: { codigo, serie, modelo_id, nivel_id, epc }
+    // → crea el activo y le vincula el EPC en un solo paso.
+    crearConEpc: async (req, res) => {
+      const activo = await uc.crearConEpc(req.body || {}, req.user)
+      res.status(201).json({ activo })
+    },
+
+    // GET /activos/epc/:epc  → la app RFID escanea y consulta a qué activo pertenece.
+    buscarPorEpc: async (req, res) => {
+      const activo = await uc.buscarPorEpc(req.params.epc)
+      res.json({ activo })
+    },
+
+    // PATCH /activos/:id/epc  body: { epc }  → vincula/reasigna el EPC al activo.
+    vincularEpc: async (req, res) => {
+      if (!esUuid(req.params.id)) throw Errores.invalido('Identificador no válido.')
+      const activo = await uc.vincularEpc(req.params.id, (req.body || {}).epc, req.user)
+      res.json({ activo })
+    },
+
+    // DELETE /activos/:id/epc  → desvincula el EPC del activo.
+    desvincularEpc: async (req, res) => {
+      if (!esUuid(req.params.id)) throw Errores.invalido('Identificador no válido.')
+      const activo = await uc.desvincularEpc(req.params.id, req.user)
+      res.json({ activo })
+    },
   }
 }

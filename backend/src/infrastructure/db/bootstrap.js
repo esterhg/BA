@@ -15,6 +15,17 @@ export async function inicializarBaseDeDatos({ pool, hashService, config }) {
     console.log(`Administrador "${config.adminUser}" creado`)
   }
 
+  // Usuario de sistema para la app RFID. Los activos creados vía API Key se le
+  // atribuyen (activos.usuario_id es NOT NULL). Queda inactivo y con una clave
+  // imposible de usar: no puede iniciar sesión, solo sirve de autor en la bitácora.
+  const { rows: [rfid] } = await pool.query(
+    `INSERT INTO usuarios (username, nombre, password_hash, rol, activo)
+     VALUES ('rfid-system', 'App RFID', 'x', 'operador', false)
+     ON CONFLICT (lower(username)) DO UPDATE SET username = EXCLUDED.username
+     RETURNING id`)
+  const rfidUsuarioId = rfid.id
+  console.log(`Usuario de sistema RFID disponible (id ${rfidUsuarioId})`)
+
   if (config.seedDemo) {
     const { rows: [{ n }] } = await pool.query('SELECT count(*)::int AS n FROM edificios')
     if (!n) {
@@ -30,4 +41,8 @@ export async function inicializarBaseDeDatos({ pool, hashService, config }) {
       console.log('Datos demo cargados (usuario operador / operador123)')
     }
   }
+
+  // Se devuelve para que el composition root lo inyecte donde haga falta
+  // (p. ej. el middleware de API Key, como autor de los activos creados por RFID).
+  return { rfidUsuarioId }
 }

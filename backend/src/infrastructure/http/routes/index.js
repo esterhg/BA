@@ -3,7 +3,7 @@ import { h } from '../middlewares.js'
 import { loginLimiter, escrituraLimiter } from '../rateLimiters.js'
 
 // Ensambla todas las rutas. Recibe los controladores y los middlewares ya creados.
-export function crearRutas({ controllers, auth, soloAdmin, pool }) {
+export function crearRutas({ controllers, auth, soloAdmin, apiKey, pool }) {
   const router = Router()
   const { authC, catalogoC, activoC, adminC, usuarioC } = controllers
 
@@ -25,6 +25,13 @@ export function crearRutas({ controllers, auth, soloAdmin, pool }) {
   router.patch('/activos/:id', auth, escrituraLimiter, h(activoC.editar))
   router.delete('/activos/:id', auth, escrituraLimiter, h(activoC.eliminar))
   router.post('/activos/sync', auth, escrituraLimiter, h(activoC.sincronizar))
+
+  // EPC / RFID — autenticación por API Key (cabecera x-api-key), para la app RFID.
+  // Rutas aisladas: no afectan al CRUD existente protegido por JWT.
+  router.post('/activos/epc', apiKey, escrituraLimiter, h(activoC.crearConEpc))
+  router.get('/activos/epc/:epc', apiKey, h(activoC.buscarPorEpc))
+  router.patch('/activos/:id/epc', apiKey, escrituraLimiter, h(activoC.vincularEpc))
+  router.delete('/activos/:id/epc', apiKey, escrituraLimiter, h(activoC.desvincularEpc))
 
   // Administración
   router.get('/admin/usuarios', auth, soloAdmin, h(usuarioC.listar))

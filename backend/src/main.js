@@ -23,7 +23,7 @@ import { crearAdminUseCases } from './application/use-cases/admin/adminUseCases.
 import { crearUsuarioUseCases } from './application/use-cases/admin/usuarioUseCases.js'
 
 // HTTP (infraestructura de entrada)
-import { crearAuth, soloAdmin } from './infrastructure/http/middlewares.js'
+import { crearAuth, crearApiKey, soloAdmin } from './infrastructure/http/middlewares.js'
 import { crearAuthController } from './infrastructure/http/controllers/authController.js'
 import { crearCatalogoController } from './infrastructure/http/controllers/catalogoController.js'
 import { crearActivoController } from './infrastructure/http/controllers/activoController.js'
@@ -61,10 +61,15 @@ const controllers = {
 
 // --- HTTP ---
 const auth = crearAuth(tokenService)
-const router = crearRutas({ controllers, auth, soloAdmin, pool })
-const app = crearApp({ router, corsOrigin: config.corsOrigin })
 
 // --- Arranque ---
+// El bootstrap crea/asegura el usuario de sistema RFID y devuelve su id, que el
+// middleware de API Key necesita para atribuir los activos creados por la app RFID.
 inicializarBaseDeDatos({ pool, hashService, config })
-  .then(() => app.listen(config.port, () => console.log(`API lista en el puerto ${config.port}`)))
+  .then(({ rfidUsuarioId }) => {
+    const apiKey = crearApiKey(config.rfidApiKey, rfidUsuarioId)
+    const router = crearRutas({ controllers, auth, soloAdmin, apiKey, pool })
+    const app = crearApp({ router, corsOrigin: config.corsOrigin })
+    app.listen(config.port, () => console.log(`API lista en el puerto ${config.port}`))
+  })
   .catch((e) => { console.error(e); process.exit(1) })

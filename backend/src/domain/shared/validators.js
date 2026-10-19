@@ -5,6 +5,11 @@ export const esUuid = (v) => UUID.test(String(v || ''))
 export const esEnteroPositivo = (v) => /^\d+$/.test(String(v ?? ''))
 export const esFechaIso = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''))
 
+// EPC de una etiqueta RFID (EPC Gen2): hexadecimal, longitud par, de 16 a 32
+// caracteres (64 a 128 bits). No distingue mayúsculas/minúsculas.
+export const EPC = /^[0-9a-f]{16,32}$/i
+export const esEpc = (v) => { const s = String(v ?? ''); return s.length % 2 === 0 && EPC.test(s) }
+
 // Escapa comodines de LIKE para que la entrada del usuario sea literal.
 export const escaparLike = (s) => String(s ?? '').replace(/[%_\\]/g, '\\$&')
 

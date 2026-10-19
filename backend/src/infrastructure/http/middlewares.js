@@ -1,7 +1,29 @@
+import { timingSafeEqual } from 'node:crypto'
 import { DomainError } from '../../domain/shared/errors.js'
 
 // Envuelve un handler async para enviar errores al middleware de errores.
 export const h = (fn) => (req, res, next) => fn(req, res, next).catch(next)
+
+// Compara dos cadenas en tiempo constante (evita timing attacks sobre la clave).
+const igualesSeguro = (a, b) => {
+  const ba = Buffer.from(String(a)), bb = Buffer.from(String(b))
+  return ba.length === bb.length && timingSafeEqual(ba, bb)
+}
+
+// Autenticación por API Key para la app RFID (cabecera x-api-key).
+// Fail-closed: si no hay clave configurada en el servidor, rechaza todo.
+export const crearApiKey = (claveEsperada, rfidUsuarioId = null) => (req, res, next) => {
+  if (!claveEsperada) return res.status(503).json({ mensaje: 'Endpoint RFID no configurado' })
+  const recibida = req.headers['x-api-key'] || ''
+  if (recibida && igualesSeguro(recibida, claveEsperada)) {
+    // La app RFID no es un usuario humano: se le atribuye el usuario de sistema
+    // "rfid-system". Así la bitácora tiene autor y los activos que cree cumplen
+    // la restricción NOT NULL de activos.usuario_id.
+    req.user = { id: rfidUsuarioId, rol: 'rfid', nombre: 'App RFID' }
+    return next()
+  }
+  res.status(401).json({ mensaje: 'API key no válida' })
+}
 
 // Autenticación por JWT. Inyecta el verificador de token.
 export const crearAuth = (tokenService) => (req, res, next) => {

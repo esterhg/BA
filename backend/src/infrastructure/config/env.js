@@ -8,10 +8,18 @@ const {
   ADMIN_USER = 'admin',
   ADMIN_PASSWORD,
   SEED_DEMO,
+  RFID_API_KEY = '',
 } = process.env
 
 if (!DATABASE_URL || !JWT_SECRET) {
   console.error('Faltan DATABASE_URL o JWT_SECRET')
+  process.exit(1)
+}
+
+// La API Key de la app RFID, si se define, debe ser lo bastante larga para no
+// adivinarse. Si queda vacía, los endpoints RFID se rechazan (fail-closed).
+if (RFID_API_KEY && RFID_API_KEY.length < 20) {
+  console.error('RFID_API_KEY inseguro: usa una cadena aleatoria de al menos 20 caracteres (ej: openssl rand -hex 24).')
   process.exit(1)
 }
 
@@ -36,4 +44,5 @@ export const config = {
   adminUser: ADMIN_USER,
   adminPassword: ADMIN_PASSWORD,
   seedDemo: SEED_DEMO === 'true',
+  rfidApiKey: RFID_API_KEY,
 }

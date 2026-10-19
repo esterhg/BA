@@ -5,7 +5,8 @@ import { escaparLike } from '../../domain/shared/validators.js'
 // Traduce el choque de índice único a un mensaje de qué campo está duplicado.
 const mensajeUnico = (e) =>
   e.constraint === 'activos_codigo_uq' ? 'Ya existe un activo con ese código.' :
-  e.constraint === 'activos_serie_uq' ? 'Ya existe un activo con esa serie.' : null
+  e.constraint === 'activos_serie_uq' ? 'Ya existe un activo con esa serie.' :
+  e.constraint === 'activos_epc_uq' ? 'Ese EPC ya está vinculado a otro activo.' : null
 
 // Convierte errores de PostgreSQL (23505/23503) en DomainError con mensaje claro.
 function traducirError(e) {
@@ -45,13 +46,13 @@ export class PgActivoRepository extends ActivoRepository {
 
   async obtenerCrudo(id) {
     const { rows: [a] } = await this.pool.query(
-      'SELECT id, codigo, serie, modelo_id, nivel_id FROM activos WHERE id = $1', [id])
+      'SELECT id, codigo, serie, epc, modelo_id, nivel_id FROM activos WHERE id = $1', [id])
     return a || null
   }
 
   async obtenerCompleto(id) {
     const { rows: [a] } = await this.pool.query(
-      `SELECT a.id, a.codigo, a.serie, a.modelo_id, a.nivel_id,
+      `SELECT a.id, a.codigo, a.serie, a.epc, a.modelo_id, a.nivel_id,
               m.nombre AS modelo, e.nombre AS edificio, n.nombre AS nivel,
               u.nombre AS usuario, a.creado_en AS fecha
          FROM activos a
@@ -85,6 +86,52 @@ export class PgActivoRepository extends ActivoRepository {
   async eliminar(id) {
     const { rowCount } = await this.pool.query('DELETE FROM activos WHERE id = $1', [id])
     return rowCount > 0
+  }
+
+  // --- EPC / RFID --------------------------------------------------------
+  // Crea un activo con su EPC en una sola operación (flujo app RFID).
+  async crearConEpc({ codigo, serie, modelo_id, nivel_id, epc }, usuarioId) {
+    try {
+      const { rows: [nuevo] } = await this.pool.query(
+        `INSERT INTO activos (id, codigo, serie, epc, modelo_id, nivel_id, usuario_id, capturado_en)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, now()) RETURNING id`,
+        [codigo, serie, epc, modelo_id, nivel_id, usuarioId])
+      return this.obtenerCompleto(nuevo.id)
+    } catch (e) { throw traducirError(e) }
+  }
+
+  // Devuelve el activo (con datos legibles) al que pertenece un EPC, o null.
+  // Lo usa la app RFID al escanear una etiqueta.
+  async buscarPorEpc(epc) {
+    const { rows: [a] } = await this.pool.query(
+      `SELECT a.id, a.codigo, a.serie, a.epc, a.modelo_id, a.nivel_id,
+              m.nombre AS modelo, e.nombre AS edificio, n.nombre AS nivel,
+              u.nombre AS usuario, a.creado_en AS fecha
+         FROM activos a
+         JOIN modelos m ON m.id = a.modelo_id
+         JOIN niveles n ON n.id = a.nivel_id JOIN edificios e ON e.id = n.edificio_id
+         JOIN usuarios u ON u.id = a.usuario_id
+        WHERE a.epc = $1`, [epc])
+    return a || null
+  }
+
+  // Vincula (o reasigna) el EPC a un activo. El índice único parcial garantiza
+  // que un EPC no quede en dos activos a la vez. Devuelve el activo o null si no existe.
+  async vincularEpc(id, epc) {
+    try {
+      const { rowCount } = await this.pool.query(
+        'UPDATE activos SET epc = $1 WHERE id = $2', [epc, id])
+      if (!rowCount) return null
+      return this.obtenerCompleto(id)
+    } catch (e) { throw traducirError(e) }
+  }
+
+  // Quita el EPC de un activo (lo deja en NULL). Devuelve el activo o null si no existe.
+  async desvincularEpc(id) {
+    const { rowCount } = await this.pool.query(
+      'UPDATE activos SET epc = NULL WHERE id = $1', [id])
+    if (!rowCount) return null
+    return this.obtenerCompleto(id)
   }
 
   // Procesa un registro de la cola offline. Devuelve el resultado por registro

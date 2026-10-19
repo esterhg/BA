@@ -1,5 +1,16 @@
 import { Errores } from '../shared/errors.js'
-import { esUuid, esIdValido, textoValido, LIMITES } from '../shared/validators.js'
+import { esUuid, esIdValido, textoValido, esEpc, LIMITES } from '../shared/validators.js'
+
+// Valida y normaliza un EPC de etiqueta RFID.
+// Recorta espacios y lo pasa a MAYÚSCULAS para que la unicidad sea consistente.
+// Devuelve el EPC normalizado o lanza DomainError.
+export function normalizarEpc(valor) {
+  if (typeof valor !== 'string') throw Errores.invalido('El EPC debe ser texto.')
+  const epc = valor.trim().toUpperCase()
+  if (!epc) throw Errores.invalido('Falta el EPC.')
+  if (!esEpc(epc)) throw Errores.invalido('EPC no válido: debe ser hexadecimal, de longitud par, entre 16 y 32 caracteres.')
+  return epc
+}
 
 // Reglas de negocio del activo. No sabe nada de Express ni de PostgreSQL.
 
@@ -17,6 +28,15 @@ export function normalizarActivo(b) {
   if (!esIdValido(b.modelo_id) || !esIdValido(b.nivel_id))
     throw Errores.invalido('Falta el modelo o el nivel, o no son válidos.')
   return { codigo, serie, modelo_id: b.modelo_id, nivel_id: b.nivel_id }
+}
+
+// Valida y normaliza los datos para crear un activo CON su EPC en un solo paso
+// (flujo de la app RFID). Reutiliza las reglas de activo y de EPC.
+// Devuelve { codigo, serie, modelo_id, nivel_id, epc } o lanza DomainError.
+export function normalizarActivoConEpc(b) {
+  const base = normalizarActivo(b)
+  const epc = normalizarEpc(b?.epc)
+  return { ...base, epc }
 }
 
 // Valida un registro proveniente de la cola offline (sincronización).
