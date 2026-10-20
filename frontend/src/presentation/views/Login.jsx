@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { api, session } from '../../infrastructure/api/client.js'
-import { Ico } from '../components/ui.jsx'
+import { Ico, CampoPassword } from '../components/ui.jsx'
 
 export function Login({ onLogin }) {
   const [f, setF] = useState({ username: '', password: '' })
@@ -20,7 +20,7 @@ export function Login({ onLogin }) {
       <form className="card" onSubmit={submit}>
         <h2>Iniciar sesión</h2>
         <label>Usuario</label><input value={f.username} onChange={(e) => setF({ ...f, username: e.target.value })} autoComplete="username" />
-        <label>Contraseña</label><input type="password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} autoComplete="current-password" />
+        <label>Contraseña</label><CampoPassword value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} autoComplete="current-password" />
         <button className="p full" disabled={busy}>{busy ? 'Entrando...' : 'Entrar'}</button>
         {err && <div className="msg er">{err}</div>}
       </form>

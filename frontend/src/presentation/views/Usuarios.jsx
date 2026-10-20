@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, session } from '../../infrastructure/api/client.js'
+import { CampoPassword } from '../components/ui.jsx'
 
 // Gestión de usuarios (solo administradores): listar, crear, editar,
 // restablecer contraseña y desactivar.
@@ -95,7 +96,7 @@ function FormUsuario({ onCancel, onSaved }) {
       <label>Nombre completo</label>
       <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="ej.: Juan Pérez" />
       <label>Contraseña (mínimo 8 caracteres)</label>
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
+      <CampoPassword value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
       <label>Rol</label>
       <select value={rol} onChange={(e) => setRol(e.target.value)}>
         <option value="operador">Operador</option>
@@ -157,7 +158,6 @@ function FormEditar({ usuario, onCancel, onSaved }) {
 function FormPassword({ usuario, onCancel, onSaved }) {
   const [password, setPassword] = useState('')
   const [repetir, setRepetir] = useState('')
-  const [ver, setVer] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
 
@@ -178,13 +178,9 @@ function FormPassword({ usuario, onCancel, onSaved }) {
       <p className="mu sm">Usuario: <b>{usuario.nombre}</b> ({usuario.username})</p>
       <p className="mu sm">La contraseña actual no puede verse (se guarda cifrada). Aquí asignas una nueva.</p>
       <label>Nueva contraseña (mínimo 8 caracteres)</label>
-      <input type={ver ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} autoFocus autoComplete="new-password" />
+      <CampoPassword value={password} onChange={(e) => setPassword(e.target.value)} autoFocus autoComplete="new-password" />
       <label>Repetir nueva contraseña</label>
-      <input type={ver ? 'text' : 'password'} value={repetir} onChange={(e) => setRepetir(e.target.value)} autoComplete="new-password" />
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input type="checkbox" checked={ver} onChange={(e) => setVer(e.target.checked)} style={{ width: 'auto' }} />
-        Mostrar lo que estoy escribiendo
-      </label>
+      <CampoPassword value={repetir} onChange={(e) => setRepetir(e.target.value)} autoComplete="new-password" />
       <button className="p full" disabled={busy} onClick={guardar}>{busy ? 'Guardando...' : 'Restablecer contraseña'}</button>
       {err && <div className="msg er">{err}</div>}
       <button className="full" onClick={onCancel}>Cancelar</button>
