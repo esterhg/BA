@@ -38,11 +38,41 @@ export function crearActivoController(uc) {
     },
 
     // --- EPC / RFID ------------------------------------------------------
+    // GET /activos/epc  → lista activos (autenticación por API Key).
+    // Mismos filtros que GET /activos. La app RFID no es admin, así que la
+    // respuesta no incluye usuario/fecha (esAdmin = false).
+    listarConApiKey: async (req, res) => {
+      const filtros = {
+        q: String(req.query.q || '').trim(),
+        cursor: esEnteroPositivo(req.query.cursor) ? req.query.cursor : null,
+        edificioId: esEnteroPositivo(req.query.edificio_id) ? Number(req.query.edificio_id) : null,
+        nivelId: esEnteroPositivo(req.query.nivel_id) ? Number(req.query.nivel_id) : null,
+        serie: String(req.query.serie || '').trim(),
+        esAdmin: false,
+      }
+      res.json(await uc.listar(filtros))
+    },
+
     // POST /activos/epc  body: { codigo, serie, modelo_id, nivel_id, epc }
     // → crea el activo y le vincula el EPC en un solo paso.
     crearConEpc: async (req, res) => {
       const activo = await uc.crearConEpc(req.body || {}, req.user)
       res.status(201).json({ activo })
+    },
+
+    // POST /activos/sin-epc  body: { codigo, serie, modelo_id, nivel_id }
+    // → crea un activo SIN EPC (autenticación por API Key). Reutiliza el mismo
+    // caso de uso que el CRUD por JWT, así que queda en la bitácora de movimientos.
+    crearSinEpc: async (req, res) => {
+      const activo = await uc.crear(req.body || {}, req.user)
+      res.status(201).json({ activo })
+    },
+
+    // GET /activos/id/:id  → obtiene UN activo por su ID (UUID) con API Key.
+    obtenerConApiKey: async (req, res) => {
+      if (!esUuid(req.params.id)) throw Errores.invalido('Identificador no válido.')
+      const activo = await uc.obtener(req.params.id)
+      res.json({ activo })
     },
 
     // GET /activos/epc/:epc  → la app RFID escanea y consulta a qué activo pertenece.

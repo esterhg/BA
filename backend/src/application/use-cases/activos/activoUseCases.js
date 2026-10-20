@@ -7,6 +7,14 @@ export function crearActivoUseCases({ activoRepo, movimientoRepo }) {
   return {
     listar: (filtros) => activoRepo.listar(filtros),
 
+    // Obtiene un activo por su ID (UUID), con datos legibles. Lanza
+    // NO_ENCONTRADO si no existe. Lo usa la app RFID para consultar un activo.
+    obtener: async (id) => {
+      const activo = await activoRepo.obtenerCompleto(id)
+      if (!activo) throw Errores.noEncontrado('El activo no existe.')
+      return activo
+    },
+
     crear: async (datos, usuario) => {
       const limpio = normalizarActivo(datos)
       const creado = await activoRepo.crear(limpio, usuario.id)
