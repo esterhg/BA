@@ -33,9 +33,13 @@ export function crearRutas({ controllers, auth, soloAdmin, apiKey, pool }) {
   router.patch('/activos/:id/epc', apiKey, escrituraLimiter, h(activoC.vincularEpc))
   router.delete('/activos/:id/epc', apiKey, escrituraLimiter, h(activoC.desvincularEpc))
 
-  // Administración
+  // Administración — CRUD de usuarios (solo administradores)
   router.get('/admin/usuarios', auth, soloAdmin, h(usuarioC.listar))
   router.post('/admin/usuarios', auth, soloAdmin, escrituraLimiter, h(usuarioC.crear))
+  router.get('/admin/usuarios/:id', auth, soloAdmin, h(usuarioC.obtener))
+  router.patch('/admin/usuarios/:id', auth, soloAdmin, escrituraLimiter, h(usuarioC.editar))
+  router.patch('/admin/usuarios/:id/password', auth, soloAdmin, escrituraLimiter, h(usuarioC.resetPassword))
+  router.delete('/admin/usuarios/:id', auth, soloAdmin, escrituraLimiter, h(usuarioC.eliminar))
   router.get('/admin/resumen', auth, soloAdmin, h(adminC.resumen))
   router.get('/movimientos', auth, soloAdmin, h(adminC.listarMovimientos))
 

@@ -11,6 +11,10 @@ export class UsuarioRepository {
   listarActivos() { return noImpl('UsuarioRepository.listarActivos') }
   existeUsername(_username) { return noImpl('UsuarioRepository.existeUsername') }
   crear(_datos) { return noImpl('UsuarioRepository.crear') }
+  obtener(_id) { return noImpl('UsuarioRepository.obtener') }
+  editar(_id, _cambios) { return noImpl('UsuarioRepository.editar') }
+  cambiarPassword(_id, _passwordHash) { return noImpl('UsuarioRepository.cambiarPassword') }
+  desactivar(_id) { return noImpl('UsuarioRepository.desactivar') }
 }
 
 export class CatalogoRepository {

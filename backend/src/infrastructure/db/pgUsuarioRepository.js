@@ -10,9 +10,18 @@ export class PgUsuarioRepository extends UsuarioRepository {
   }
 
   async listarActivos() {
+    // Oculta el usuario de sistema RFID; solo usuarios humanos gestionables.
     const { rows } = await this.pool.query(
-      'SELECT id, nombre, rol FROM usuarios WHERE activo ORDER BY nombre')
+      `SELECT id, username, nombre, rol, activo FROM usuarios
+       WHERE username <> 'rfid-system' ORDER BY activo DESC, nombre`)
     return rows
+  }
+
+  // Obtiene un usuario por id SIN exponer nunca el hash de la contraseña.
+  async obtener(id) {
+    const { rows: [u] } = await this.pool.query(
+      'SELECT id, username, nombre, rol, activo FROM usuarios WHERE id = $1', [id])
+    return u || null
   }
 
   async existeUsername(username) {
@@ -28,5 +37,38 @@ export class PgUsuarioRepository extends UsuarioRepository {
        VALUES ($1,$2,$3,$4) RETURNING id, username, nombre, rol, activo`,
       [username, nombre, passwordHash, rol])
     return u
+  }
+
+  // Edita campos permitidos (nombre, rol, activo). Construye el SET de forma
+  // dinámica solo con las claves presentes. Devuelve datos públicos (sin hash).
+  async editar(id, cambios) {
+    const columnas = { nombre: 'nombre', rol: 'rol', activo: 'activo' }
+    const sets = []
+    const valores = []
+    for (const [clave, columna] of Object.entries(columnas)) {
+      if (cambios[clave] !== undefined) { valores.push(cambios[clave]); sets.push(`${columna} = $${valores.length}`) }
+    }
+    if (!sets.length) return this.obtener(id)
+    valores.push(id)
+    const { rows: [u] } = await this.pool.query(
+      `UPDATE usuarios SET ${sets.join(', ')} WHERE id = $${valores.length}
+       RETURNING id, username, nombre, rol, activo`, valores)
+    return u || null
+  }
+
+  // Reemplaza el hash de la contraseña (reset por administrador).
+  async cambiarPassword(id, passwordHash) {
+    const { rows: [u] } = await this.pool.query(
+      `UPDATE usuarios SET password_hash = $1 WHERE id = $2
+       RETURNING id, username, nombre, rol, activo`, [passwordHash, id])
+    return u || null
+  }
+
+  // Baja lógica: desactiva el usuario (se conserva para la bitácora).
+  async desactivar(id) {
+    const { rows: [u] } = await this.pool.query(
+      `UPDATE usuarios SET activo = false WHERE id = $1
+       RETURNING id, username, nombre, rol, activo`, [id])
+    return u || null
   }
 }
