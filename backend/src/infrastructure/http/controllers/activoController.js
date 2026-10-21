@@ -47,6 +47,7 @@ export function crearActivoController(uc) {
         cursor: esEnteroPositivo(req.query.cursor) ? req.query.cursor : null,
         edificioId: esEnteroPositivo(req.query.edificio_id) ? Number(req.query.edificio_id) : null,
         nivelId: esEnteroPositivo(req.query.nivel_id) ? Number(req.query.nivel_id) : null,
+        modeloId: esEnteroPositivo(req.query.modelo_id) ? Number(req.query.modelo_id) : null,
         serie: String(req.query.serie || '').trim(),
         esAdmin: false,
       }

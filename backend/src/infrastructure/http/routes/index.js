@@ -31,6 +31,9 @@ export function crearRutas({ controllers, auth, soloAdmin, apiKey, pool }) {
   router.get('/activos/epc', apiKey, h(activoC.listarConApiKey))          // listar (debe ir ANTES de /epc/:epc)
   router.get('/activos/id/:id', apiKey, h(activoC.obtenerConApiKey))      // obtener un activo por ID (UUID)
   router.post('/activos/sin-epc', apiKey, escrituraLimiter, h(activoC.crearSinEpc))  // crear sin EPC
+  // Catálogos para la app RFID (API Key). Separados de los /ubicaciones y /modelos por JWT.
+  router.get('/catalogo/ubicaciones', apiKey, h(catalogoC.listarUbicacionesApiKey))  // edificios + niveles anidados
+  router.get('/catalogo/modelos', apiKey, h(catalogoC.listarModelosApiKey))          // modelos
   router.post('/activos/epc', apiKey, escrituraLimiter, h(activoC.crearConEpc))
   router.get('/activos/epc/:epc', apiKey, h(activoC.buscarPorEpc))
   router.patch('/activos/:id/epc', apiKey, escrituraLimiter, h(activoC.vincularEpc))
