@@ -46,3 +46,7 @@ export class MovimientoRepository {
 export class AdminRepository {
   resumen(_filtros) { return noImpl('AdminRepository.resumen') }
 }
+
+export class ConflictoRepository {
+  listar(_filtros) { return noImpl('ConflictoRepository.listar') }
+}

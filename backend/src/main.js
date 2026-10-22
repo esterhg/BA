@@ -13,6 +13,7 @@ import { PgCatalogoRepository } from './infrastructure/db/pgCatalogoRepository.j
 import { PgActivoRepository } from './infrastructure/db/pgActivoRepository.js'
 import { PgMovimientoRepository } from './infrastructure/db/pgMovimientoRepository.js'
 import { PgAdminRepository } from './infrastructure/db/pgAdminRepository.js'
+import { PgConflictoRepository } from './infrastructure/db/pgConflictoRepository.js'
 import { inicializarBaseDeDatos } from './infrastructure/db/bootstrap.js'
 
 // Casos de uso (aplicación)
@@ -21,6 +22,7 @@ import { crearCatalogoUseCases } from './application/use-cases/catalogo/catalogo
 import { crearActivoUseCases } from './application/use-cases/activos/activoUseCases.js'
 import { crearAdminUseCases } from './application/use-cases/admin/adminUseCases.js'
 import { crearUsuarioUseCases } from './application/use-cases/admin/usuarioUseCases.js'
+import { crearConflictoUseCases } from './application/use-cases/admin/conflictoUseCases.js'
 
 // HTTP (infraestructura de entrada)
 import { crearAuth, crearApiKey, soloAdmin } from './infrastructure/http/middlewares.js'
@@ -29,6 +31,7 @@ import { crearCatalogoController } from './infrastructure/http/controllers/catal
 import { crearActivoController } from './infrastructure/http/controllers/activoController.js'
 import { crearAdminController } from './infrastructure/http/controllers/adminController.js'
 import { crearUsuarioController } from './infrastructure/http/controllers/usuarioController.js'
+import { crearConflictoController } from './infrastructure/http/controllers/conflictoController.js'
 import { crearRutas } from './infrastructure/http/routes/index.js'
 import { crearApp } from './infrastructure/http/app.js'
 
@@ -42,6 +45,7 @@ const catalogoRepo = new PgCatalogoRepository(pool)
 const activoRepo = new PgActivoRepository(pool)
 const movimientoRepo = new PgMovimientoRepository(pool)
 const adminRepo = new PgAdminRepository(pool)
+const conflictoRepo = new PgConflictoRepository(pool)
 
 // --- Casos de uso ---
 const login = crearLogin({ usuarioRepo, tokenService, hashService })
@@ -49,6 +53,7 @@ const catalogoUC = crearCatalogoUseCases({ catalogoRepo })
 const activoUC = crearActivoUseCases({ activoRepo, movimientoRepo })
 const adminUC = crearAdminUseCases({ adminRepo, usuarioRepo, movimientoRepo })
 const usuarioUC = crearUsuarioUseCases({ usuarioRepo, hashService })
+const conflictoUC = crearConflictoUseCases({ conflictoRepo })
 
 // --- Controladores ---
 const controllers = {
@@ -57,6 +62,7 @@ const controllers = {
   activoC: crearActivoController(activoUC),
   adminC: crearAdminController(adminUC),
   usuarioC: crearUsuarioController(usuarioUC),
+  conflictoC: crearConflictoController(conflictoUC),
 }
 
 // --- HTTP ---

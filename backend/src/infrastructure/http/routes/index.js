@@ -5,7 +5,7 @@ import { loginLimiter, escrituraLimiter } from '../rateLimiters.js'
 // Ensambla todas las rutas. Recibe los controladores y los middlewares ya creados.
 export function crearRutas({ controllers, auth, soloAdmin, apiKey, pool }) {
   const router = Router()
-  const { authC, catalogoC, activoC, adminC, usuarioC } = controllers
+  const { authC, catalogoC, activoC, adminC, usuarioC, conflictoC } = controllers
 
   // Salud
   router.get('/health', h(async (_req, res) => { await pool.query('SELECT 1'); res.json({ ok: true }) }))
@@ -34,6 +34,7 @@ export function crearRutas({ controllers, auth, soloAdmin, apiKey, pool }) {
   // Catálogos para la app RFID (API Key). Separados de los /ubicaciones y /modelos por JWT.
   router.get('/catalogo/ubicaciones', apiKey, h(catalogoC.listarUbicacionesApiKey))  // edificios + niveles anidados
   router.get('/catalogo/modelos', apiKey, h(catalogoC.listarModelosApiKey))          // modelos
+  router.get('/conflictos', apiKey, h(conflictoC.listar))  // conflictos de sync (filtros: modelo_id, nivel_id, fecha_desde, fecha_hasta, cursor)
   router.post('/activos/epc', apiKey, escrituraLimiter, h(activoC.crearConEpc))
   router.get('/activos/epc/:epc', apiKey, h(activoC.buscarPorEpc))
   router.patch('/activos/:id/epc', apiKey, escrituraLimiter, h(activoC.vincularEpc))
