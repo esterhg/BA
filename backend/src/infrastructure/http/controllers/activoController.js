@@ -1,4 +1,4 @@
-import { esUuid, esEnteroPositivo } from '../../../domain/shared/validators.js'
+import { esUuid, esEnteroPositivo, esFechaIso } from '../../../domain/shared/validators.js'
 import { Errores } from '../../../domain/shared/errors.js'
 
 export function crearActivoController(uc) {
@@ -9,6 +9,10 @@ export function crearActivoController(uc) {
         cursor: esEnteroPositivo(req.query.cursor) ? req.query.cursor : null,
         edificioId: esEnteroPositivo(req.query.edificio_id) ? Number(req.query.edificio_id) : null,
         nivelId: esEnteroPositivo(req.query.nivel_id) ? Number(req.query.nivel_id) : null,
+        modeloId: esEnteroPositivo(req.query.modelo_id) ? Number(req.query.modelo_id) : null,
+        usuarioId: esEnteroPositivo(req.query.usuario_id) ? Number(req.query.usuario_id) : null,
+        desde: esFechaIso(req.query.desde) ? req.query.desde : null,
+        hasta: esFechaIso(req.query.hasta) ? req.query.hasta : null,
         serie: String(req.query.serie || '').trim(),
         esAdmin: req.user.rol === 'administrador',
       }

@@ -8,6 +8,7 @@ export function crearAdminController(uc) {
         hasta: esFechaIso(req.query.hasta) ? req.query.hasta : null,
         edificioId: esEnteroPositivo(req.query.edificio_id) ? Number(req.query.edificio_id) : null,
         usuarioId: esEnteroPositivo(req.query.usuario_id) ? Number(req.query.usuario_id) : null,
+        modeloId: esEnteroPositivo(req.query.modelo_id) ? Number(req.query.modelo_id) : null,
       }
       res.json(await uc.resumen(filtros))
     },

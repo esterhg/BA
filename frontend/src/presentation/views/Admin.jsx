@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import * as XLSX from 'xlsx'
 import { api } from '../../infrastructure/api/client.js'
 import { hoyISO, primerDiaMesISO } from '../../domain/format.js'
 
@@ -9,10 +10,13 @@ export function Admin({ cat }) {
   const [hasta, setHasta] = useState('')
   const [edId, setEdId] = useState('')
   const [usuarioId, setUsuarioId] = useState('')
+  const [modeloId, setModeloId] = useState('')
   const [usuarios, setUsuarios] = useState([])
   const [data, setData] = useState(null)
   const [err, setErr] = useState('')
   const [, setLoad] = useState(false)
+  const [exp, setExp] = useState('listo')   // listo | cargando | ok | vacio | error
+  const [expN, setExpN] = useState(0)
 
   // Cargar la lista de usuarios una vez para el filtro.
   useEffect(() => { api('/admin/usuarios').then(setUsuarios).catch(() => {}) }, [])
@@ -25,21 +29,57 @@ export function Admin({ cat }) {
     return { d: null, h: null }
   }
 
-  useEffect(() => {
+  // Parámetros de filtro comunes al resumen y a la exportación.
+  const paramsFiltro = () => {
     const { d, h } = rango()
     const params = new URLSearchParams()
     if (d) params.set('desde', d)
     if (h) params.set('hasta', h)
     if (edId) params.set('edificio_id', edId)
     if (usuarioId) params.set('usuario_id', usuarioId)
+    if (modeloId) params.set('modelo_id', modeloId)
+    return params
+  }
+
+  useEffect(() => {
     setLoad(true); setErr('')
-    api(`/admin/resumen?${params.toString()}`)
+    api(`/admin/resumen?${paramsFiltro().toString()}`)
       .then((r) => { setData(r); setLoad(false) })
       .catch((x) => { setErr(x.status === 403 ? 'No tienes permiso para ver esto.' : 'No se pudo cargar el resumen. Requiere conexión.'); setLoad(false) })
-  }, [periodo, desde, hasta, edId, usuarioId])
+  }, [periodo, desde, hasta, edId, usuarioId, modeloId])
 
-  const limpiar = () => { setPeriodo('todo'); setDesde(''); setHasta(''); setEdId(''); setUsuarioId('') }
-  const hayFiltros = periodo !== 'todo' || edId || usuarioId
+  // Exporta el detalle de activos filtrados a Excel (.xlsx), respetando los filtros.
+  async function exportarExcel() {
+    setExp('cargando'); setExpN(0); setErr('')
+    try {
+      const filas = []
+      let cursor = null
+      do {
+        const p = paramsFiltro()
+        if (cursor) p.set('cursor', cursor)
+        const r = await api(`/activos?${p.toString()}`)
+        filas.push(...r.items); cursor = r.next
+      } while (cursor)
+
+      if (!filas.length) { setExp('vacio'); return }
+
+      const datos = filas.map((a) => ({
+        'Código': a.codigo, 'Serie': a.serie, 'Modelo': a.modelo,
+        'Edificio': a.edificio, 'Nivel': a.nivel, 'Capturó': a.usuario || '',
+        'Fecha': a.fecha ? new Date(a.fecha).toLocaleString('es') : '',
+      }))
+      const ws = XLSX.utils.json_to_sheet(datos)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Activos')
+      XLSX.writeFile(wb, `activos-${new Date().toISOString().slice(0, 10)}.xlsx`)
+      setExpN(filas.length); setExp('ok')
+    } catch (x) {
+      setExp(x.status === 403 ? 'error' : 'error')
+    }
+  }
+
+  const limpiar = () => { setPeriodo('todo'); setDesde(''); setHasta(''); setEdId(''); setUsuarioId(''); setModeloId(''); setExp('listo') }
+  const hayFiltros = periodo !== 'todo' || edId || usuarioId || modeloId
   const Metric = ({ n, t }) => <div className="mc" style={{ textAlign: 'center' }}><div className="mb"><b style={{ fontSize: 24 }}>{n}</b><small>{t}</small></div></div>
 
   return <>
@@ -68,7 +108,18 @@ export function Admin({ cat }) {
         <option value="">Todos los usuarios</option>
         {usuarios.map((u) => <option key={u.id} value={u.id}>{u.nombre}</option>)}
       </select>
+      <label>Modelo</label>
+      <select value={modeloId} onChange={(e) => setModeloId(e.target.value)}>
+        <option value="">Todos los modelos</option>
+        {cat.modelos.map((m) => <option key={m.id} value={m.id}>{m.nombre}</option>)}
+      </select>
       {hayFiltros && <button className="full" onClick={limpiar}>Limpiar filtros</button>}
+      <button className="p full" disabled={exp === 'cargando'} onClick={exportarExcel}>
+        {exp === 'cargando' ? 'Preparando Excel...' : (hayFiltros ? 'Exportar a Excel (filtrado)' : 'Exportar a Excel (todos)')}
+      </button>
+      {exp === 'ok' && <div className="msg ok">✓ Se exportaron {expN} activos.</div>}
+      {exp === 'vacio' && <div className="msg wa">No hay activos que cumplan esos filtros.</div>}
+      {exp === 'error' && <div className="msg er">No se pudo exportar. Requiere conexión.</div>}
     </div>
 
     {err && <div className="card"><div className="msg wa">{err}</div></div>}

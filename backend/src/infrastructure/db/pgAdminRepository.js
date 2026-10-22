@@ -3,15 +3,16 @@ import { AdminRepository } from '../../domain/repositories/contracts.js'
 export class PgAdminRepository extends AdminRepository {
   constructor(pool) { super(); this.pool = pool }
 
-  // filtros: { desde, hasta, edificioId, usuarioId }
+  // filtros: { desde, hasta, edificioId, usuarioId, modeloId }
   // El rango se aplica sobre a.creado_en; "hasta" es inclusivo (hasta el fin de ese día).
-  async resumen({ desde = null, hasta = null, edificioId = null, usuarioId = null }) {
-    const P = [desde, hasta, edificioId, usuarioId]
+  async resumen({ desde = null, hasta = null, edificioId = null, usuarioId = null, modeloId = null }) {
+    const P = [desde, hasta, edificioId, usuarioId, modeloId]
     const filtroActivos = `
         ($1::date IS NULL OR a.creado_en >= $1::date)
         AND ($2::date IS NULL OR a.creado_en < ($2::date + INTERVAL '1 day'))
         AND ($3::int IS NULL OR n.edificio_id = $3::int)
-        AND ($4::int IS NULL OR a.usuario_id = $4::int)`
+        AND ($4::int IS NULL OR a.usuario_id = $4::int)
+        AND ($5::int IS NULL OR a.modelo_id = $5::int)`
 
     const [tot, usuarios, modelos, conflictos, porEdificio, porUsuario, porDia] = await Promise.all([
       this.pool.query(`SELECT count(*)::int AS n FROM activos a JOIN niveles n ON n.id = a.nivel_id WHERE ${filtroActivos}`, P),
@@ -45,7 +46,7 @@ export class PgAdminRepository extends AdminRepository {
       porEdificio: porEdificio.rows,
       porUsuario: porUsuario.rows,
       porDia: porDia.rows,
-      filtros: { desde, hasta, edificio_id: edificioId, usuario_id: usuarioId },
+      filtros: { desde, hasta, edificio_id: edificioId, usuario_id: usuarioId, modelo_id: modeloId },
     }
   }
 }

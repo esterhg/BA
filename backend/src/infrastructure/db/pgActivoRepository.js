@@ -21,8 +21,8 @@ const LIM = 30
 export class PgActivoRepository extends ActivoRepository {
   constructor(pool) { super(); this.pool = pool }
 
-  // filtros: { q, cursor, edificioId, nivelId, modeloId, serie, esAdmin }
-  async listar({ q = '', cursor = null, edificioId = null, nivelId = null, modeloId = null, serie = '', esAdmin = false }) {
+  // filtros: { q, cursor, edificioId, nivelId, modeloId, usuarioId, desde, hasta, serie, esAdmin }
+  async listar({ q = '', cursor = null, edificioId = null, nivelId = null, modeloId = null, usuarioId = null, desde = null, hasta = null, serie = '', esAdmin = false }) {
     const { rows } = await this.pool.query(
       `SELECT a.seq, a.id, a.codigo, a.serie, a.modelo_id, a.nivel_id,
               m.nombre AS modelo, e.nombre AS edificio, n.nombre AS nivel,
@@ -37,8 +37,11 @@ export class PgActivoRepository extends ActivoRepository {
           AND ($5::text = '' OR a.serie ILIKE $6)
           AND ($7::int IS NULL OR a.nivel_id = $7::int)
           AND ($8::int IS NULL OR a.modelo_id = $8::int)
+          AND ($9::int IS NULL OR a.usuario_id = $9::int)
+          AND ($10::date IS NULL OR a.creado_en >= $10::date)
+          AND ($11::date IS NULL OR a.creado_en < ($11::date + INTERVAL '1 day'))
         ORDER BY a.seq DESC LIMIT ${LIM + 1}`,
-      [q, `%${escaparLike(q)}%`, cursor, edificioId, serie, `${escaparLike(serie)}%`, nivelId, modeloId])
+      [q, `%${escaparLike(q)}%`, cursor, edificioId, serie, `${escaparLike(serie)}%`, nivelId, modeloId, usuarioId, desde, hasta])
     const page = rows.slice(0, LIM)
     const next = rows.length > LIM ? String(page[page.length - 1].seq) : null
     const items = page.map(({ seq, usuario, fecha, ...a }) => (esAdmin ? { ...a, usuario, fecha } : a))
