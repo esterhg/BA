@@ -49,6 +49,7 @@ export function crearRutas({ controllers, auth, soloAdmin, apiKey, pool }) {
   router.delete('/admin/usuarios/:id', auth, soloAdmin, escrituraLimiter, h(usuarioC.eliminar))
   router.get('/admin/resumen', auth, soloAdmin, h(adminC.resumen))
   router.get('/movimientos', auth, soloAdmin, h(adminC.listarMovimientos))
+  router.get('/admin/conflictos', auth, soloAdmin, h(conflictoC.listar))  // conflictos de sync (web, JWT)
 
   return router
 }
